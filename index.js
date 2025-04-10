@@ -1,33 +1,33 @@
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
+const WebSocket = require('ws');
 
-// Inicializar Express
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*", // Permitir todas las conexiones (puedes ajustar esto para más seguridad)
-    }
+const wss = new WebSocket.Server({ server });
+
+// Ruta para probar que el servidor está vivo
+app.get('/', (req, res) => {
+    res.send('Servidor WebSocket está activo 🚀');
 });
 
-// Cuando un cliente se conecta
-io.on('connection', (socket) => {
-    console.log('🔌 Cliente conectado:', socket.id);
+// Manejo de conexiones WebSocket
+wss.on('connection', (ws) => {
+    console.log('Cliente conectado');
+    ws.send('Conexión exitosa al servidor WebSocket 🎉');
 
-    socket.on('llamar-cita', (data) => {
-        console.log('📢 Evento recibido:', data);
-        // Emitimos a todos los clientes conectados
-        io.emit('cita-llamada', data);
+    ws.on('message', (message) => {
+        console.log('Mensaje recibido:', message);
+        ws.send(`Servidor recibió: ${message}`);
     });
 
-    socket.on('disconnect', () => {
-        console.log('❌ Cliente desconectado:', socket.id);
+    ws.on('close', () => {
+        console.log('Cliente desconectado');
     });
 });
 
-// Puerto del servidor
-const PORT = 3000;
+// Usamos el puerto proporcionado por Render
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`✅ Servidor WebSocket corriendo en http://localhost:${PORT}`);
+    console.log(`Servidor escuchando en puerto ${PORT}`);
 });
